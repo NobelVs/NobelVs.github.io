@@ -95,10 +95,18 @@
     </div>
 
     <script>
+        let addedStudents = new Set(); // ใช้ Set เพื่อเก็บชื่อนักเรียนที่ถูกเพิ่มแล้ว
+
+        // โหลดข้อมูลจาก localStorage เมื่อหน้าเว็บโหลด
+        window.onload = function() {
+            loadAttendance();
+        };
+
         function addStudent() {
             let nameInput = document.getElementById("student-name");
-            let name = nameInput.value.trim();
-            if (name !== "") {
+            let name = nameInput.value.trim().toLowerCase(); // แปลงเป็นตัวพิมพ์เล็กเพื่อเปรียบเทียบ
+
+            if (name !== "" && !addedStudents.has(name)) {
                 let table = document.getElementById("student-list");
                 let row = table.insertRow();
                 let cell1 = row.insertCell(0);
@@ -106,12 +114,21 @@
                 cell1.textContent = name;
                 cell2.innerHTML = '<input type="checkbox">';
                 nameInput.value = "";
+                addedStudents.add(name); // เพิ่มชื่อลงใน Set
+                saveAttendance(); // บันทึกข้อมูลเมื่อเพิ่มนักเรียน
+            } else if (addedStudents.has(name)) {
+                alert("ชื่อนี้ถูกเพิ่มไปแล้ว!");
             } else {
                 alert("กรุณาพิมพ์ชื่อก่อนเพิ่ม!");
             }
         }
 
         function submitAttendance() {
+            saveAttendance(); // บันทึกข้อมูลเมื่อกดบันทึก
+            alert("บันทึกการเช็คชื่อเรียบร้อย!");
+        }
+
+        function saveAttendance() {
             let students = document.querySelectorAll("#student-list tr");
             let attendanceData = [];
             
@@ -121,8 +138,23 @@
                 attendanceData.push({ name, present: checked });
             });
             
-            console.log("ผลการเช็คชื่อ:", attendanceData);
-            alert("บันทึกการเช็คชื่อเรียบร้อย!");
+            localStorage.setItem("attendance", JSON.stringify(attendanceData));
+        }
+
+        function loadAttendance() {
+            let attendanceData = JSON.parse(localStorage.getItem("attendance")) || [];
+            let table = document.getElementById("student-list");
+            table.innerHTML = ""; // ล้างตารางก่อนโหลดข้อมูลใหม่
+            addedStudents.clear(); // ล้าง Set ก่อนโหลดข้อมูลใหม่
+
+            attendanceData.forEach(student => {
+                let row = table.insertRow();
+                let cell1 = row.insertCell(0);
+                let cell2 = row.insertCell(1);
+                cell1.textContent = student.name;
+                cell2.innerHTML = `<input type="checkbox" ${student.present ? "checked" : ""}>`;
+                addedStudents.add(student.name.toLowerCase()); // เพิ่มชื่อลงใน Set
+            });
         }
     </script>
 </body>
